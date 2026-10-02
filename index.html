@@ -425,8 +425,9 @@
                   <div class="field full"><label for="purposeDetail">구체적인 활용 목적 *</label><textarea id="purposeDetail" name="purposeDetail" placeholder="제작물, 사용 장소, 사용 기간, 활용 방식 등을 구체적으로 작성해 주세요." required maxlength="2000"></textarea></div>
                   <div class="field"><label for="period">활용 예정 기간</label><input id="period" name="period" placeholder="예: 2026.09.01 ~ 2026.09.30" maxlength="120"></div>
                   <div class="field"><label for="quantity">제작 수량 / 노출 규모</label><input id="quantity" name="quantity" placeholder="예: 스티커 300매 / 인스타그램 게시물 1건" maxlength="120"></div>
-                  <div class="field full hidden" id="fileField"><label for="designFiles">신규 시안 파일</label><input id="designFiles" name="designFiles" type="file" accept=".png,.jpg,.jpeg,.pdf,image/png,image/jpeg,application/pdf" multiple><span class="hint">PNG/JPG/PDF 파일을 최대 5개까지 첨부할 수 있으며, 파일당 5MB·전체 18MB 이하로 준비해 주세요. 제출한 시안은 담당자 신청 메일에 첨부되고, 관리자 검토를 위해 접근이 제한된 Google Drive 폴더에도 저장됩니다.</span><div id="filePreview" class="upload-preview"></div><div id="uploadStatus" class="upload-status"></div></div>
+                  <div class="field full hidden" id="fileField"><label for="designFiles">신규 시안 파일</label><input id="designFiles" name="designFiles" type="file" accept=".png,.jpg,.jpeg,.pdf,image/png,image/jpeg,application/pdf" multiple><span class="hint">PNG/JPG/PDF 파일을 최대 5개까지 첨부할 수 있으며, 파일당 5MB·전체 18MB 이하로 준비해 주세요. 제출한 시안은 담당자 신청 메일에 첨부되고, 관리자 검토를 위해 접근이 제한된 Google Drive 폴더에도 저장됩니다.</span><div id="filePreview" class="upload-preview"></div></div>
                 </div>
+                <div id="uploadStatus" class="upload-status"></div>
 
                 <div style="margin-top:16px;border-top:1px solid #edf1f4;padding-top:12px">
                   <label class="checkline"><input type="checkbox" id="agree1"> <span>하냥이·하이비비 캐릭터의 색상, 형태, 비율을 임의 변경하지 않겠습니다.</span></label>
@@ -489,6 +490,7 @@
   const retryRecordBtn = document.getElementById('retryRecordBtn');
 
   let current = 1;
+  let navigationTimer = null;
   let decision = null;
   let requestId = '';
   let requestToken = '';
@@ -530,6 +532,8 @@
   }
 
   function showPage(n) {
+    clearTimeout(navigationTimer);
+    navigationTimer = null;
     current = n;
     pages.forEach(p => p.classList.toggle('active', Number(p.dataset.page) === n));
     steps.forEach(s => {
@@ -539,6 +543,15 @@
     });
     document.getElementById('prevWizard').classList.toggle('hidden', n <= 1);
     document.getElementById('apply').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function scheduleAdvance(n) {
+    clearTimeout(navigationTimer);
+    navigationTimer = setTimeout(() => {
+      navigationTimer = null;
+      if (n === 4) renderResult();
+      else showPage(n);
+    }, 160);
   }
 
   function clearNode(node) {
@@ -1009,11 +1022,11 @@
   });
 
   form.querySelectorAll('input[name="affiliationType"]').forEach(input => {
-    input.addEventListener('click', () => setTimeout(() => showPage(2), 160));
+    input.addEventListener('click', () => scheduleAdvance(2));
   });
 
   function tryAdvanceFromStep2() {
-    if (value('artType') && value('modType')) setTimeout(() => showPage(3), 160);
+    if (value('artType') && value('modType')) scheduleAdvance(3);
   }
 
   form.querySelectorAll('input[name="artType"], input[name="modType"]').forEach(input => {
@@ -1021,7 +1034,7 @@
   });
 
   form.querySelectorAll('input[name="purposeType"]').forEach(input => {
-    input.addEventListener('click', () => setTimeout(() => { renderResult(); }, 160));
+    input.addEventListener('click', () => scheduleAdvance(4));
   });
 
   function fileExtension(name) {
